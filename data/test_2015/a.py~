@@ -1,0 +1,16 @@
+from glob import glob
+
+for fname in glob("gs/*"):
+	with open(fname) as f:
+		gs_values = [x.strip() for x in f.readlines()]
+	fn = fname.split("/")[1]
+	with open("data/"+fn) as f:
+		sentences = [x.strip() for x in f.readlines()]
+	l = [x for x in zip(sentences,gs_values) if x[1]]
+	s = [x[0] for x in l]
+ 	g = [x[1] for x in l]
+	with open("data/"+fn,"w") as f:
+		f.write("\n".join(s))
+	with open(fname) as f:
+		f.write("\n".join(g))
+	print fname 
