@@ -1,0 +1,25 @@
+AUTHOR: SAKETH RAM
+
+A Word Aligner for English:
+===========================
+A tool for aligning similar words from both a pair of sentences
+
+Source link:
+============
+
+Github link: https://github.com/ma-sultan/monolingual-word-aligner
+Git clone: https://github.com/ma-sultan/monolingual-word-aligner.git
+
+Modifications:
+=============
+The aligner tool actually returns the indexes of aligned words and a list
+of aligned words. But, we tweaked the system to return two more lists that
+contained the list of words from each sentence.
+
+The modifications are made in: 
+aligner.py (from lines 1580 to 1584)
+
+References:
+===========
+Sultan, Md Arafat, Steven Bethard, and Tamara Sumner. "Back to Basics for 
+Monolingual Alignment: Exploiting Word Similarity and Contextual Evidence."
