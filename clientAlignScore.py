@@ -16,6 +16,7 @@ def read_training_gs(filename):
 		return [float(x) for x in f.readlines()]
 
 def get_alignment_score(sentence_pair):
+	print ("Inside get_alignment_score")
 	alignment = align(sentence_pair[0].decode("utf-8").encode("ascii","ignore"), sentence_pair[1].decode("utf-8").encode("ascii","ignore"))
 	align_count1 = len([x[0] for x in alignment[1] if x[0] not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
 	align_count2 = len([x[1] for x in alignment[1] if x[1] not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
@@ -26,6 +27,7 @@ def get_alignment_score(sentence_pair):
 	return (2*prop1*prop2)/(prop1 + prop2)
 
 def get_cosine_similarity(sentence_pair):
+	print ("Inside get_cosine_similarity")
 	sentence1 = Counter(word_token_expr.findall(sentence_pair[0]))
 	sentence2 = Counter(word_token_expr.findall(sentence_pair[1]))
 	common_words = set(sentence1.keys()) & set(sentence2.keys())
@@ -40,11 +42,13 @@ def get_cosine_similarity(sentence_pair):
 		return float(common_count)/union_count
 
 def read_training_data(category):
+	print ("Inside read_training_data")
 	files = [f for f in glob("data/*") if "train" in f]
 	training_sentence_files = [f for train_dir in files for f in glob(train_dir+"/data/*")  if category in f]
 	training_gs_files = [f for train_dir in files for f in glob(train_dir+"/gs/*") if category in f]
 	training_sentences = [x for f in training_sentence_files for x in read_training_file(f)]
 	gold_standard_scores = [x for f in training_gs_files for x in read_training_gs(f)]
+	print ("Parsed all training and gold standard data")
 	return training_sentences, gold_standard_scores
 	
 if __name__ == "__main__": 

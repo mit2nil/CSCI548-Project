@@ -1,0 +1,4 @@
+nltk>=3.2.1
+jsonrpclib>=0.1.7
+pexpect>=4.2.1
+unidecode>=0.4.19
