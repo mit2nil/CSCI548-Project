@@ -1,12 +1,14 @@
 import sys
 sys.path.append('monolingual-word-aligner')
 from glob import glob
+from requests import get
 
 from aligner import *
 from collections import Counter
 import re
 import math
 from scipy.stats import pearsonr
+from sklearn.linear_model import Ridge
 
 def read_training_file(filename):
 	with open(filename) as f:
@@ -15,6 +17,15 @@ def read_training_file(filename):
 def read_training_gs(filename):
 	with open(filename) as f:
 		return [float(x) for x in f.readlines()]
+
+def get_umbc_score(sentence_pair, type='relation', corpus='webbase'):
+    sss_url = "http://swoogle.umbc.edu/SimService/GetSimilarity"
+    try:
+        response = get(sss_url, params={'operation':'api','phrase1':sentence_pair[0],'phrase2':sentence_pair[1],'type':type,'corpus':corpus})
+        return float(response.text.strip())
+    except:
+        print 'Error in getting similarity for %s: %s' % ((s1,s2), response)
+        return 0.0
 
 def get_alignment_score(sentence_pair):
 
@@ -69,6 +80,6 @@ if __name__ == "__main__":
 		word_token_expr = re.compile(r'\w+')
 		predicted_cosine_similarity_scores = map(get_cosine_similarity, training_sentences)
 		print pearsonr(gold_standard_scores, predicted_alignment_scores)
-		#print "Predicted alignment score : "+str(predicted_alignment_scores)
-		#print "Predicted cosine similarity score : "+str(predicted_cosine_similarity_scores)
 		
+		#ridge_classifier = Ridge(alpha = 1.0)
+		#ridge_classifier.fit()
