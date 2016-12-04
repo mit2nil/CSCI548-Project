@@ -6,6 +6,7 @@ from aligner import *
 from collections import Counter
 import re
 import math
+from scipy.stats import pearsonr
 
 def read_training_file(filename):
 	with open(filename) as f:
@@ -16,15 +17,23 @@ def read_training_gs(filename):
 		return [float(x) for x in f.readlines()]
 
 def get_alignment_score(sentence_pair):
+
 	print ("Inside get_alignment_score")
-	alignment = align(sentence_pair[0].decode("utf-8").encode("ascii","ignore"), sentence_pair[1].decode("utf-8").encode("ascii","ignore"))
+	try:
+		alignment = align(sentence_pair[0].decode("utf-8").encode("ascii","ignore"), sentence_pair[1].decode("utf-8").encode("ascii","ignore"))
+	except:
+		alignment = align(re.sub("[#(){}:]+","",sentence_pair[0]).decode("utf-8").encode("ascii","ignore"), 
+			re.sub("[#(){}:]+","",sentence_pair[1]).decode("utf-8").encode("ascii","ignore"))
 	align_count1 = len([x[0] for x in alignment[1] if x[0] not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
 	align_count2 = len([x[1] for x in alignment[1] if x[1] not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
 	content_count1 = len([x for x in alignment[2] if x not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
 	content_count2 = len([x for x in alignment[3] if x not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
 	prop1 = align_count1/float(content_count1)
 	prop2 = align_count2/float(content_count2)
-	return (2*prop1*prop2)/(prop1 + prop2)
+	if prop1 and prop2:
+		return (2*prop1*prop2)/(prop1 + prop2)
+	else:
+		return 0
 
 def get_cosine_similarity(sentence_pair):
 	print ("Inside get_cosine_similarity")
