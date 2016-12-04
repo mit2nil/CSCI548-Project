@@ -21,6 +21,7 @@ def read_gs_file(filename):
 
 def get_umbc_score(sentence_pair):
 	endpoint = "http://swoogle.umbc.edu/StsService/GetStsSim"
+	response = ""
 	try:
 		response = get(endpoint, params={'operation':'api','phrase1':sentence_pair[0],'phrase2':sentence_pair[1]})
 		return float(response.text.strip())
@@ -46,6 +47,7 @@ def get_alignment_score(sentence_pair):
 		return 0
 
 def get_cosine_similarity(sentence_pair):
+	word_token_expr = re.compile(r'\w+')
 	sentence1 = Counter(word_token_expr.findall(sentence_pair[0]))
 	sentence2 = Counter(word_token_expr.findall(sentence_pair[1]))
 	common_words = set(sentence1.keys()) & set(sentence2.keys())
@@ -160,7 +162,6 @@ def main(argv):
 		if category not in traincat:
 			print "## Pearson coefficient : 0\n"
 		else:
-			word_token_expr = re.compile(r'\w+')
 			predicted_cosine_similarity_scores = map(get_cosine_similarity, test_sentences)
 
 			# Get the training data
