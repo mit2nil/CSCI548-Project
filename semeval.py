@@ -9,6 +9,8 @@ import re
 import math
 from scipy.stats import pearsonr
 from sklearn.linear_model import Ridge
+from sklearn import linear_model
+from pandas import DataFrame
 
 def read_sentence_file(filename):
 	with open(filename) as f:
@@ -24,7 +26,7 @@ def get_umbc_score(sentence_pair):
 		response = get(endpoint, params={'operation':'api','phrase1':sentence_pair[0],'phrase2':sentence_pair[1]})
 		return float(response.text.strip())
 	except:
-		print 'Error in getting similarity for %s: %s' % ((sentence_pair[0],sentence_pair[1]), response)
+		print 'Error in getting similarity for %s: %s' % ((sentence_pair[0],sentence_pair[1]))
 		return 0.0
 
 def get_alignment_score(sentence_pair):
@@ -66,22 +68,23 @@ def read_data(category, dataset_type):
 	gold_standard_scores = [x for f in gs_files for x in read_gs_file(f)]
 	return sentences, gold_standard_scores
 	
-if __name__ == "__main__": 
-	for category in ["c1","c2","c3","c4","c5"]:
-		
+if __name__ == "__main__":
+	 
+	for category in ["c1","c4","c5"]:
+		data = []
 		print "\n# Running Semantic Textual Similarity for SemEval category : "+category+"\n"
 		test_sentences, gold_standard_scores = read_data(category,"test")
 		
 		print "# Method 1"
 		print "# SemEval 2015 rank 5 - DLS@CU-U"
 		predicted_alignment_scores = map(get_alignment_score, test_sentences)
-		print "Pearson coefficient : "+pearsonr(gold_standard_scores, predicted_alignment_scores)[0]
+		print "Pearson coefficient : ",pearsonr(gold_standard_scores, predicted_alignment_scores)[0]
 		print "\n"
 
 		print "# Method 2"
 		print "# SemEval 2013 rank 1 - UMBC EBIQUITY-CORE"
 		predicted_umbc_scores = map(get_umbc_score, test_sentences)
-		print "Pearson coefficient : "+pearsonr(gold_standard_scores, predicted_umbc_scores)[0]
+		print "Pearson coefficient : ",pearsonr(gold_standard_scores, predicted_umbc_scores)[0]
 		print "\n"
 
 		print "# Method 3"
@@ -96,14 +99,25 @@ if __name__ == "__main__":
 		ridge_predicted_alignment_scores = map(get_alignment_score, ridge_training_sentences)
 		# Feature 2 - Cosine similarity
 		ridge_predicted_cosine_similarity_scores = map(get_cosine_similarity, ridge_training_sentences)
-		
+		# Feature 3 - UMBC
+		ridge_predicted_umbc_scores = map(get_umbc_score, ridge_training_sentences)
+
 		# Ridge training
-		X_train = zip(ridge_predicted_alignment_scores,ridge_predicted_cosine_similarity_scores)
+		X_train = zip(ridge_predicted_alignment_scores,ridge_predicted_cosine_similarity_scores, ridge_predicted_umbc_scores)
 		ridge_classifier = Ridge(alpha = 1.0)
 		ridge_classifier.fit(X_train,ridge_gold_standard_scores)
 
 		# Ridge Prediction
-		X_test = zip(predicted_alignment_scores, predicted_cosine_similarity_scores)
+		X_test = zip(predicted_alignment_scores, predicted_cosine_similarity_scores, predicted_umbc_scores)
 		predicted_ridge_scores = ridge_classifier.predict(X_test)
-		print "Pearson coefficient : "+pearsonr(gold_standard_scores, predicted_ridge_scores)[0]
+		print "Pearson coefficient : ",pearsonr(gold_standard_scores, predicted_ridge_scores)[0]
 		print "\n"
+
+		#Ensemble
+		#clf = linear_model.LinearRegression()
+		#clf.fit(X_train,ridge_gold_standard_scores)
+		#beta = clf.coef_
+		
+		ensemble_data = zip(predicted_alignment_scores, predicted_cosine_similarity_scores, predicted_umbc_scores, predicted_ridge_scores,gold_standard_scores)
+		DataFrame(ensemble_data,columns=["Alignment","Cosine similarity","UMBC","Ridge 3 combined", "y"]).to_csv(category+".csv",index=False)
+		print "Ensemble CSV for category",category,"created :)"
