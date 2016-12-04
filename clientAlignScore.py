@@ -63,7 +63,7 @@ def get_cosine_similarity(sentence_pair):
 
 def read_training_data(category):
 	#print ("Inside read_training_data")
-	files = [f for f in glob("data/*") if "train" in f]
+	files = [f for f in glob("data/*") if "test" in f]
 	training_sentence_files = [f for train_dir in files for f in glob(train_dir+"/data/*")  if category in f]
 	training_gs_files = [f for train_dir in files for f in glob(train_dir+"/gs/*") if category in f]
 	training_sentences = [x for f in training_sentence_files for x in read_training_file(f)]
