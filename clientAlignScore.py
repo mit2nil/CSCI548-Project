@@ -18,7 +18,7 @@ def read_training_gs(filename):
 
 def get_alignment_score(sentence_pair):
 
-	print ("Inside get_alignment_score")
+	#print ("Inside get_alignment_score")
 	try:
 		alignment = align(sentence_pair[0].decode("utf-8").encode("ascii","ignore"), sentence_pair[1].decode("utf-8").encode("ascii","ignore"))
 	except:
@@ -36,7 +36,7 @@ def get_alignment_score(sentence_pair):
 		return 0
 
 def get_cosine_similarity(sentence_pair):
-	print ("Inside get_cosine_similarity")
+	#print ("Inside get_cosine_similarity")
 	sentence1 = Counter(word_token_expr.findall(sentence_pair[0]))
 	sentence2 = Counter(word_token_expr.findall(sentence_pair[1]))
 	common_words = set(sentence1.keys()) & set(sentence2.keys())
@@ -51,22 +51,24 @@ def get_cosine_similarity(sentence_pair):
 		return float(common_count)/union_count
 
 def read_training_data(category):
-	print ("Inside read_training_data")
+	#print ("Inside read_training_data")
 	files = [f for f in glob("data/*") if "train" in f]
 	training_sentence_files = [f for train_dir in files for f in glob(train_dir+"/data/*")  if category in f]
 	training_gs_files = [f for train_dir in files for f in glob(train_dir+"/gs/*") if category in f]
 	training_sentences = [x for f in training_sentence_files for x in read_training_file(f)]
 	gold_standard_scores = [x for f in training_gs_files for x in read_training_gs(f)]
-	print ("Parsed all training and gold standard data")
+	#print ("Parsed all training and gold standard data")
 	return training_sentences, gold_standard_scores
 	
 if __name__ == "__main__": 
 	for category in ["c1","c2","c3","c4","c5"]:
 		print "Score for "+category
 		training_sentences, gold_standard_scores = read_training_data(category)
-		predicted_alignment_scores = map(get_alignment_score, training_sentences[:2])
-
+		predicted_alignment_scores = map(get_alignment_score, training_sentences)
+		print pearsonr(gold_standard_scores, predicted_alignment_scores)
 		word_token_expr = re.compile(r'\w+')
-		predicted_cosine_similarity_scores = map(get_cosine_similarity, training_sentences[:2])
-		print "Predicted alignment score : "+str(predicted_alignment_scores)
-		print "Predicted cosine similarity score : "+str(predicted_cosine_similarity_scores)
+		predicted_cosine_similarity_scores = map(get_cosine_similarity, training_sentences)
+		print pearsonr(gold_standard_scores, predicted_alignment_scores)
+		#print "Predicted alignment score : "+str(predicted_alignment_scores)
+		#print "Predicted cosine similarity score : "+str(predicted_cosine_similarity_scores)
+		
