@@ -70,27 +70,36 @@ if __name__ == "__main__":
 	for category in ["c1","c2","c3","c4","c5"]:
 		
 		print "\n# Running Semantic Textual Similarity for SemEval category : "+category+"\n"
+		
 		test_sentences, gold_standard_scores = read_data(category,"test")
+		print "# Test dataset size : ",len(test_sentences),"\n"
 		
 		print "# Method 1"
 		print "# SemEval 2015 rank 5 - DLS@CU-U"
 		predicted_alignment_scores = map(get_alignment_score, test_sentences)
-		print "Pearson coefficient : "+pearsonr(gold_standard_scores, predicted_alignment_scores)[0]
+		print "Pearson coefficient : ", pearsonr(gold_standard_scores, predicted_alignment_scores)[0]
 		print "\n"
 
 		print "# Method 2"
 		print "# SemEval 2013 rank 1 - UMBC EBIQUITY-CORE"
 		predicted_umbc_scores = map(get_umbc_score, test_sentences)
-		print "Pearson coefficient : "+pearsonr(gold_standard_scores, predicted_umbc_scores)[0]
+		print "Pearson coefficient : ", pearsonr(gold_standard_scores, predicted_umbc_scores)[0]
 		print "\n"
 
 		print "# Method 3"
 		print "# SemEval 2015 rank 1+3 - DLS@CU-S1 and DLS@CU-S2"
+
+		if category	== "c2" or category	== "c3":
+			print "Pearson coefficient : 0"
+			print "\n"
+			continue
+
 		word_token_expr = re.compile(r'\w+')
 		predicted_cosine_similarity_scores = map(get_cosine_similarity, test_sentences)
 
 		# Get the training data
 		ridge_training_sentences, ridge_gold_standard_scores = read_data(category, "train")
+		print "# Train dataset size : ",len(ridge_training_sentences),"\n"
 
 		# Feature 1 - DLS@CU-U  
 		ridge_predicted_alignment_scores = map(get_alignment_score, ridge_training_sentences)
@@ -105,5 +114,5 @@ if __name__ == "__main__":
 		# Ridge Prediction
 		X_test = zip(predicted_alignment_scores, predicted_cosine_similarity_scores)
 		predicted_ridge_scores = ridge_classifier.predict(X_test)
-		print "Pearson coefficient : "+pearsonr(gold_standard_scores, predicted_ridge_scores)[0]
+		print "Pearson coefficient : ", pearsonr(gold_standard_scores, predicted_ridge_scores)[0]
 		print "\n"
