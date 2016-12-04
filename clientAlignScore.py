@@ -61,9 +61,9 @@ def get_cosine_similarity(sentence_pair):
 	else:
 		return float(common_count)/union_count
 
-def read_training_data(category):
+def read_training_data(category,dataset_type):
 	#print ("Inside read_training_data")
-	files = [f for f in glob("data/*") if "test" in f]
+	files = [f for f in glob("data/*") if dataset_type in f]
 	training_sentence_files = [f for train_dir in files for f in glob(train_dir+"/data/*")  if category in f]
 	training_gs_files = [f for train_dir in files for f in glob(train_dir+"/gs/*") if category in f]
 	training_sentences = [x for f in training_sentence_files for x in read_training_file(f)]
@@ -74,12 +74,20 @@ def read_training_data(category):
 if __name__ == "__main__": 
 	for category in ["c1","c2","c3","c4","c5"]:
 		print "Score for "+category
-		training_sentences, gold_standard_scores = read_training_data(category)
+		training_sentences, gold_standard_scores = read_training_data(category, "test")
 		predicted_alignment_scores = map(get_alignment_score, training_sentences)
-		print pearsonr(gold_standard_scores, predicted_alignment_scores)
+		print pearsonr(gold_standard_scores, predicted_alignment_scores)[0]
 		word_token_expr = re.compile(r'\w+')
 		predicted_cosine_similarity_scores = map(get_cosine_similarity, training_sentences)
-		print pearsonr(gold_standard_scores, predicted_alignment_scores)
+		print pearsonr(gold_standard_scores, predicted_cosine_similarity_scores)[0]
 		
-		#ridge_classifier = Ridge(alpha = 1.0)
-		#ridge_classifier.fit()
+		ridge_training_sentences, ridge_gold_standard_scores = read_training_data(category, "train")
+		ridge_predicted_alignment_scores = map(get_alignment_score, ridge_training_sentences)
+		ridge_predicted_cosine_similarity_scores = map(get_cosine_similarity, ridge_training_sentences)
+		X_train = zip(ridge_predicted_alignment_scores,ridge_predicted_cosine_similarity_scores)
+		ridge_classifier = Ridge(alpha = 1.0)
+		ridge_classifier.fit(X_train,ridge_gold_standard_scores)
+
+		X_test = zip(predicted_alignment_scores, predicted_cosine_similarity_scores)
+		predicted_scores = ridge_classifier.predict(X_test)
+		print pearsonr(gold_standard_scores, predicted_scores)[0]
