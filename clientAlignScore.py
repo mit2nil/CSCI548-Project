@@ -52,9 +52,12 @@ def read_training_data(category):
 	return training_sentences, gold_standard_scores
 	
 if __name__ == "__main__": 
-	training_sentences, gold_standard_scores = read_training_data("c4")
-	predicted_alignment_scores = map(get_alignment_score, training_sentences[:2])
+	for category in ["c1","c2","c3","c4","c5"]:
+		print "Score for "+category
+		training_sentences, gold_standard_scores = read_training_data(category)
+		predicted_alignment_scores = map(get_alignment_score, training_sentences[:2])
 
-	word_token_expr = re.compile(r'\w+')
-	predicted_cosine_similarity_scores = map(get_cosine_similarity, training_sentences[:2])
-	print predicted_alignment_scores, predicted_cosine_similarity_scores
+		word_token_expr = re.compile(r'\w+')
+		predicted_cosine_similarity_scores = map(get_cosine_similarity, training_sentences[:2])
+		print "Predicted alignment score : "+str(predicted_alignment_scores)
+		print "Predicted cosine similarity score : "+str(predicted_cosine_similarity_scores)
