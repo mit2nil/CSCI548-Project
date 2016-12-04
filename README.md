@@ -22,7 +22,4 @@
 * Open another terminal in the same directory 
 * ```cd <path>/CSCI548-Project```
 * ```python -m nltk.downloader stopwords```
-* Add below lines in the monolingual-word-aligner/wordSim.py inside function loadPPDB
-..* ``` import os```
-..*	```ppdbFileName = os.path.join(os.path.dirname(os.path.realpath(__file__)),ppdbFileName) ```
-* Run ```python clientAlignScore.py```
+* Run ```python semeval.py [options]```
