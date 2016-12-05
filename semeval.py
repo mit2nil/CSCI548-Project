@@ -198,7 +198,7 @@ def main(argv):
 
 		print "Ensemble CSV for category",category,"created :)"
 		print "## Method 4"
-		print "## Ensemble (Methods 1,2,3)
+		print "## Ensemble (Methods 1,2,3)"
 		#Ensemble
 		clf = linear_model.LinearRegression()
 		clf.fit(ensemble_data[ensemble_data.columns[:-1]],ensemble_data[ensemble_data.columns[-1]])
