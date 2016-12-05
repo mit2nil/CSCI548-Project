@@ -103,5 +103,31 @@ Ensemble CSV for category c4 created :)
 ## Ensemble (Methods 1,2,3)
 ## Pearson coefficient :  0.836709015029
 
+## SemEval category : c5
+
+## Test dataset size :  750 
+
+## Method 1
+## SemEval 2015 rank 5 - DLS@CU-U
+## Pearson coefficient :  0.824590632903
+
+
+## Method 2
+## SemEval 2013 rank 1 - UMBC EBIQUITY-CORE
+## Pearson coefficient :  0.790310151183
+
+
+## Method 3
+## Ridge regression (features: SemEval 2015 (3,5), SemEval 2013 (1))
+## Train dataset size :  2949 
+
+## Pearson coefficient :  0.825050801943
+
+
+Ensemble CSV for category c4 created :)
+## Method 4
+## Ensemble (Methods 1,2,3)
+## Pearson coefficient :  0.850982209302
+
 
 
