@@ -160,12 +160,12 @@ def main(argv):
 		print "\n"
 
 		print "## Method 3"
-		print "## SemEval 2015 rank 1+3 - DLS@CU-S1 and DLS@CU-S2"
+		print "## Ridge regression (features: SemEval 2015 (3,5), SemEval 2013 (1))"
 
 		if category not in traincat:
 			print "## Pearson coefficient : 0\n"
 			ensemble_data = zip(predicted_alignment_scores, predicted_umbc_scores, gold_standard_scores)
-			ensemble_data = DataFrame(ensemble_data,columns=["Alignment","UMBC","y"]).to_csv(category+".csv",index=False)
+			ensemble_data = DataFrame(ensemble_data,columns=["Alignment","UMBC","y"])
 			ensemble_data.to_csv(category+".csv",index=False)
 		else:
 			predicted_cosine_similarity_scores = map(get_cosine_similarity, test_sentences)
@@ -197,14 +197,75 @@ def main(argv):
 			ensemble_data.to_csv(category+".csv",index=False)
 
 		print "Ensemble CSV for category",category,"created :)"
-		
+		print "## Method 4"
+		print "## Ensemble (Methods 1,2,3)
 		#Ensemble
 		clf = linear_model.LinearRegression()
 		clf.fit(ensemble_data[ensemble_data.columns[:-1]],ensemble_data[ensemble_data.columns[-1]])
 		theta = clf.coef_
 		ensemble_scores = dot(ensemble_data[ensemble_data.columns[:-1]],theta)
 		print "## Pearson coefficient : ",pearsonr(gold_standard_scores, ensemble_scores)[0]
+		print "\n"
+		DataFrame(ensemble_scores,columns=["Score"]).to_csv(category+"_test_ensemble_output.csv",index=False)
+
+	# Run everything for evaluation category
+	print "# Running Semantic Textual Similarity for evaluation data set"
+	for category in evalcat:
+		print "## SemEval category : "+category+"\n"
+		test_sentences, gold_standard_scores = read_data(category,"test")
+		print "## Test dataset size : ",len(test_sentences),"\n"
 		
+		print "## Method 1"
+		print "## SemEval 2015 rank 5 - DLS@CU-U"
+		predicted_alignment_scores = map(get_alignment_score, test_sentences)
+		
+		print "## Method 2"
+		print "## SemEval 2013 rank 1 - UMBC EBIQUITY-CORE"
+		predicted_umbc_scores = map(get_umbc_score, test_sentences)
+		
+		print "## Method 3"
+		print "## SemEval 2015 rank 1+3 - DLS@CU-S1 and DLS@CU-S2"
+
+		if category not in traincat:
+			print "## Pearson coefficient : 0\n"
+			ensemble_data = zip(predicted_alignment_scores, predicted_umbc_scores, gold_standard_scores)
+			ensemble_data = DataFrame(ensemble_data,columns=["Alignment","UMBC","y"]).to_csv(category+".csv",index=False)
+			ensemble_data.to_csv(category+".csv",index=False)
+		else:
+			predicted_cosine_similarity_scores = map(get_cosine_similarity, test_sentences)
+
+			# Get the training data
+			ridge_training_sentences, ridge_gold_standard_scores = read_data(category, "train")
+			print "## Train dataset size : ",len(ridge_training_sentences),"\n"
+
+			# Feature 1 - DLS@CU-U  
+			ridge_predicted_alignment_scores = map(get_alignment_score, ridge_training_sentences)
+			# Feature 2 - Cosine similarity
+			ridge_predicted_cosine_similarity_scores = map(get_cosine_similarity, ridge_training_sentences)
+			# Feature 3 - UMBC
+			ridge_predicted_umbc_scores = map(get_umbc_score, ridge_training_sentences)
+
+			# Ridge training
+			X_train = zip(ridge_predicted_alignment_scores,ridge_predicted_cosine_similarity_scores, ridge_predicted_umbc_scores)
+			ridge_classifier = Ridge(alpha = 1.0)
+			ridge_classifier.fit(X_train,ridge_gold_standard_scores)
+
+			# Ridge Prediction
+			X_test = zip(predicted_alignment_scores, predicted_cosine_similarity_scores, predicted_umbc_scores)
+			predicted_ridge_scores = ridge_classifier.predict(X_test)
+			
+			ensemble_data = zip(predicted_alignment_scores, predicted_cosine_similarity_scores, predicted_umbc_scores, predicted_ridge_scores,gold_standard_scores)
+			ensemble_data = DataFrame(ensemble_data,columns=["Alignment","Cosine similarity","UMBC","Ridge 3 combined", "y"])
+			ensemble_data.to_csv(category+".csv",index=False)
+
+		print "Ensemble CSV for category",category,"created :)"
+		
+		#Ensemble
+		clf = linear_model.LinearRegression()
+		clf.fit(ensemble_data[ensemble_data.columns[:-1]],ensemble_data[ensemble_data.columns[-1]])
+		theta = clf.coef_
+		ensemble_scores = dot(ensemble_data[ensemble_data.columns[:-1]],theta)
+		DataFrame(ensemble_scores,columns=["Score"]).to_csv(category+"_evaluation_ensemble_output.csv",index=False)
 		
 if __name__ == "__main__": 
 	main(sys.argv[1:])
