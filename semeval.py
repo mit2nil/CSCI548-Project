@@ -1,16 +1,18 @@
-import sys
+#!/usr/bin/python
+
+import sys,re, getopt, math
 sys.path.append('monolingual-word-aligner')
+sys.dont_write_bytecode = True
+
 from glob import glob
 from requests import get
-
 from aligner import *
 from collections import Counter
-import re
-import math
 from scipy.stats import pearsonr
 from sklearn.linear_model import Ridge
 from sklearn import linear_model
 from pandas import DataFrame
+from numpy import dot
 
 def read_sentence_file(filename):
 	with open(filename) as f:
@@ -22,6 +24,7 @@ def read_gs_file(filename):
 
 def get_umbc_score(sentence_pair):
 	endpoint = "http://swoogle.umbc.edu/StsService/GetStsSim"
+	response = ""
 	try:
 		response = get(endpoint, params={'operation':'api','phrase1':sentence_pair[0],'phrase2':sentence_pair[1]})
 		return float(response.text.strip())
@@ -47,6 +50,7 @@ def get_alignment_score(sentence_pair):
 		return 0
 
 def get_cosine_similarity(sentence_pair):
+	word_token_expr = re.compile(r'\w+')
 	sentence1 = Counter(word_token_expr.findall(sentence_pair[0]))
 	sentence2 = Counter(word_token_expr.findall(sentence_pair[1]))
 	common_words = set(sentence1.keys()) & set(sentence2.keys())
@@ -62,62 +66,145 @@ def get_cosine_similarity(sentence_pair):
 
 def read_data(category, dataset_type):
 	files = [f for f in glob("data/*") if dataset_type in f]
-	sentence_files = [f for train_dir in files for f in glob(train_dir+"/data/*")  if category in f]
-	gs_files = [f for train_dir in files for f in glob(train_dir+"/gs/*") if category in f]
+	sentence_files = [f for datadir in files for f in glob(datadir+"/data/*")  if category in f]
+	gs_files = [f for datadir in files for f in glob(datadir+"/gs/*") if category in f]
 	sentences = [x for f in sentence_files for x in read_sentence_file(f)]
 	gold_standard_scores = [x for f in gs_files for x in read_gs_file(f)]
 	return sentences, gold_standard_scores
 	
-if __name__ == "__main__":
-	 
-	for category in ["c1","c4","c5"]:
-		data = []
-		print "\n# Running Semantic Textual Similarity for SemEval category : "+category+"\n"
+def extractCategories(dir, dataset_type):
+	files = [f for f in glob(dir+"/*") if dataset_type in f]
+	files = [f for datadir in files for f in glob(datadir+"/data/*")]
+	files = [os.path.split(f)[1] for f in files]
+	files = [f[:f.index('_')] if '_' in f else f[:f.index('.')] for f in files]
+	return sorted(list(set(files)))
+
+def printUsage():
+	print 'Usage: semeval.py [options]'
+	print '       -r <dirname> or --traindir=<dirname> : Directory containing training data.'
+	print '       -t <dirname> or --testdir=<dirname> : Directory containing test data.'
+	print '       -e <dirname> or --evaldir=<dirname> : Directory containing evaluation data. No need of gold standard files.'
+	print '       -h : Print this help.'
+	print 'NOTE: Refer to https://github.com/mit2nil/CSCI548-Project for further installation and usage details.\n'
+
+def main(argv):
+	traindir = ""
+	testdir = ""
+	evaldir = ""
+
+	try:
+		opts, args = getopt.getopt(argv,"hr:t:e:",["traindir=","testdir=","evaldir="])
+	except:
+		print "Please provide appropriate options!\n"
+		printUsage()
+		sys.exit(1)
+
+	if len(opts) == 0:
+		print "Please provide appropriate options!\n"
+		printUsage()
+		sys.exit(1)
+
+	for opt, arg in opts:
+		if opt == '-h':
+			printUsage()
+			sys.exit(1)
+		elif opt in ('-r','--traindir'):
+			traindir = arg
+			print "Training dir is set to :",traindir
+		elif opt in ('-t','--testdir'):
+			testdir = arg
+			print "Test dir is set to :",testdir
+		elif opt in ('-e','--evaldir'):
+			evaldir = arg
+			print "Evaluation dir is set to:",evaldir
+	
+	# Arguments checks
+	if traindir == "" or (traindir != "" and not os.path.isdir(traindir)):
+		print "Training data is required.\n"
+		printUsage()
+		sys.exit(1)
+	
+	if testdir == "" and evaldir == "":
+		print "Both test and evaluation directory can't be skipped.\n"
+		printUsage()
+		sys.exit(1)
+	elif testdir != "" and not os.path.isdir(testdir):
+		print "Can't find test directory.",testdir
+		sys.exit(1)
+	elif evaldir != "" and not os.path.isdir(evaldir):
+		print "Can't find evaluation directory.",evaldir
+		sys.exit(1)
+
+	# Create list of categories based on the names of the file without suffixes.
+	traincat = extractCategories(traindir,"train")
+	testcat = extractCategories(testdir,"test")
+	evalcat = extractCategories(evaldir,"test")
+
+	# Run everything for test category
+	print "# Running Semantic Textual Similarity for test data set"
+	for category in testcat:
+		print "## SemEval category : "+category+"\n"
 		test_sentences, gold_standard_scores = read_data(category,"test")
+		print "## Test dataset size : ",len(test_sentences),"\n"
 		
-		print "# Method 1"
-		print "# SemEval 2015 rank 5 - DLS@CU-U"
+		print "## Method 1"
+		print "## SemEval 2015 rank 5 - DLS@CU-U"
 		predicted_alignment_scores = map(get_alignment_score, test_sentences)
-		print "Pearson coefficient : ",pearsonr(gold_standard_scores, predicted_alignment_scores)[0]
+		print "## Pearson coefficient : ",pearsonr(gold_standard_scores, predicted_alignment_scores)[0]
 		print "\n"
 
-		print "# Method 2"
-		print "# SemEval 2013 rank 1 - UMBC EBIQUITY-CORE"
+		print "## Method 2"
+		print "## SemEval 2013 rank 1 - UMBC EBIQUITY-CORE"
 		predicted_umbc_scores = map(get_umbc_score, test_sentences)
-		print "Pearson coefficient : ",pearsonr(gold_standard_scores, predicted_umbc_scores)[0]
+		print "## Pearson coefficient : ", pearsonr(gold_standard_scores, predicted_umbc_scores)[0]
 		print "\n"
 
-		print "# Method 3"
-		print "# SemEval 2015 rank 1+3 - DLS@CU-S1 and DLS@CU-S2"
-		word_token_expr = re.compile(r'\w+')
-		predicted_cosine_similarity_scores = map(get_cosine_similarity, test_sentences)
+		print "## Method 3"
+		print "## SemEval 2015 rank 1+3 - DLS@CU-S1 and DLS@CU-S2"
 
-		# Get the training data
-		ridge_training_sentences, ridge_gold_standard_scores = read_data(category, "train")
+		if category not in traincat:
+			print "## Pearson coefficient : 0\n"
+			ensemble_data = zip(predicted_alignment_scores, predicted_umbc_scores, gold_standard_scores)
+			ensemble_data = DataFrame(ensemble_data,columns=["Alignment","UMBC","y"]).to_csv(category+".csv",index=False)
+			ensemble_data.to_csv(category+".csv",index=False)
+		else:
+			predicted_cosine_similarity_scores = map(get_cosine_similarity, test_sentences)
 
-		# Feature 1 - DLS@CU-U  
-		ridge_predicted_alignment_scores = map(get_alignment_score, ridge_training_sentences)
-		# Feature 2 - Cosine similarity
-		ridge_predicted_cosine_similarity_scores = map(get_cosine_similarity, ridge_training_sentences)
-		# Feature 3 - UMBC
-		ridge_predicted_umbc_scores = map(get_umbc_score, ridge_training_sentences)
+			# Get the training data
+			ridge_training_sentences, ridge_gold_standard_scores = read_data(category, "train")
+			print "## Train dataset size : ",len(ridge_training_sentences),"\n"
 
-		# Ridge training
-		X_train = zip(ridge_predicted_alignment_scores,ridge_predicted_cosine_similarity_scores, ridge_predicted_umbc_scores)
-		ridge_classifier = Ridge(alpha = 1.0)
-		ridge_classifier.fit(X_train,ridge_gold_standard_scores)
+			# Feature 1 - DLS@CU-U  
+			ridge_predicted_alignment_scores = map(get_alignment_score, ridge_training_sentences)
+			# Feature 2 - Cosine similarity
+			ridge_predicted_cosine_similarity_scores = map(get_cosine_similarity, ridge_training_sentences)
+			# Feature 3 - UMBC
+			ridge_predicted_umbc_scores = map(get_umbc_score, ridge_training_sentences)
 
-		# Ridge Prediction
-		X_test = zip(predicted_alignment_scores, predicted_cosine_similarity_scores, predicted_umbc_scores)
-		predicted_ridge_scores = ridge_classifier.predict(X_test)
-		print "Pearson coefficient : ",pearsonr(gold_standard_scores, predicted_ridge_scores)[0]
-		print "\n"
+			# Ridge training
+			X_train = zip(ridge_predicted_alignment_scores,ridge_predicted_cosine_similarity_scores, ridge_predicted_umbc_scores)
+			ridge_classifier = Ridge(alpha = 1.0)
+			ridge_classifier.fit(X_train,ridge_gold_standard_scores)
 
-		#Ensemble
-		#clf = linear_model.LinearRegression()
-		#clf.fit(X_train,ridge_gold_standard_scores)
-		#beta = clf.coef_
+			# Ridge Prediction
+			X_test = zip(predicted_alignment_scores, predicted_cosine_similarity_scores, predicted_umbc_scores)
+			predicted_ridge_scores = ridge_classifier.predict(X_test)
+			print "## Pearson coefficient : ",pearsonr(gold_standard_scores, predicted_ridge_scores)[0]
+			print "\n"
 		
-		ensemble_data = zip(predicted_alignment_scores, predicted_cosine_similarity_scores, predicted_umbc_scores, predicted_ridge_scores,gold_standard_scores)
-		DataFrame(ensemble_data,columns=["Alignment","Cosine similarity","UMBC","Ridge 3 combined", "y"]).to_csv(category+".csv",index=False)
+			ensemble_data = zip(predicted_alignment_scores, predicted_cosine_similarity_scores, predicted_umbc_scores, predicted_ridge_scores,gold_standard_scores)
+			ensemble_data = DataFrame(ensemble_data,columns=["Alignment","Cosine similarity","UMBC","Ridge 3 combined", "y"])
+			ensemble_data.to_csv(category+".csv",index=False)
+
 		print "Ensemble CSV for category",category,"created :)"
+		
+		#Ensemble
+		clf = linear_model.LinearRegression()
+		clf.fit(ensemble_data[ensemble_data.columns[:-1]],ensemble_data[ensemble_data.columns[-1]])
+		theta = clf.coef_
+		ensemble_scores = dot(ensemble_data[ensemble_data.columns[:-1]],theta)
+		print "## Pearson coefficient : ",pearsonr(gold_standard_scores, ensemble_scores)[0]
+		
+		
+if __name__ == "__main__": 
+	main(sys.argv[1:])
