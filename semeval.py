@@ -36,8 +36,11 @@ def get_alignment_score(sentence_pair):
 	try:
 		alignment = align(sentence_pair[0].decode("utf-8").encode("ascii","ignore"), sentence_pair[1].decode("utf-8").encode("ascii","ignore"))
 	except:
-		alignment = align(re.sub("[#(){}:]+","",sentence_pair[0]).decode("utf-8").encode("ascii","ignore"), 
-			re.sub("[#(){}:]+","",sentence_pair[1]).decode("utf-8").encode("ascii","ignore"))
+		try:
+			alignment = align(re.sub("[#(){}:]+","",sentence_pair[0]).decode("utf-8").encode("ascii","ignore"), 
+				re.sub("[#(){}:]+","",sentence_pair[1]).decode("utf-8").encode("ascii","ignore"))
+		except:
+			return 0
 	align_count1 = len([x[0] for x in alignment[1] if x[0] not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
 	align_count2 = len([x[1] for x in alignment[1] if x[1] not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
 	content_count1 = len([x for x in alignment[2] if x not in stopwords + punctuations + ['\'s', '\'d', '\'ll']])
@@ -198,7 +201,7 @@ def main(argv):
 
 		print "Ensemble CSV for category",category,"created :)"
 		print "## Method 4"
-		print "## Ensemble (Methods 1,2,3)
+		print "## Ensemble (Methods 1,2,3)"
 		#Ensemble
 		clf = linear_model.LinearRegression()
 		clf.fit(ensemble_data[ensemble_data.columns[:-1]],ensemble_data[ensemble_data.columns[-1]])
