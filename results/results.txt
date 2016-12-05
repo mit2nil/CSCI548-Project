@@ -1,0 +1,107 @@
+Training dir is set to : data
+Test dir is set to : data
+
+# Running Semantic Textual Similarity for test data set
+
+## SemEval category : c1
+
+## Test dataset size :  375 
+
+## Method 1
+## SemEval 2015 rank 5 - DLS@CU-U
+## Pearson coefficient :  0.665897320952
+
+
+## Method 2
+## SemEval 2013 rank 1 - UMBC EBIQUITY-CORE
+## Pearson coefficient :  0.663516032461
+
+
+## Method 3
+## Ridge regression (features: SemEval 2015 (3,5), SemEval 2013 (1))
+## Train dataset size :  450 
+
+## Pearson coefficient :  0.696249231386
+
+
+Ensemble CSV for category c1 created :)
+## Method 4
+## Ensemble (Methods 1,2,3)
+## Pearson coefficient :  0.70495186169
+
+
+## SemEval category : c2
+
+## Test dataset size :  750 
+
+## Method 1
+## SemEval 2015 rank 5 - DLS@CU-U
+## Pearson coefficient :  0.780205929016
+
+
+## Method 2
+## SemEval 2013 rank 1 - UMBC EBIQUITY-CORE
+## Pearson coefficient :  0.769957880229
+
+
+## Method 3
+## Ridge regression (features: SemEval 2015 (3,5), SemEval 2013 (1))
+## Pearson coefficient : 0
+
+Ensemble CSV for category c2 created :)
+## Method 4
+## Ensemble (Methods 1,2,3)
+## Pearson coefficient :  0.799198685834
+
+
+## SemEval category : c3
+
+## Test dataset size :  375 
+
+## Method 1
+## SemEval 2015 rank 5 - DLS@CU-U
+## Pearson coefficient :  0.735351405643
+
+
+## Method 2
+## SemEval 2013 rank 1 - UMBC EBIQUITY-CORE
+## Pearson coefficient :  0.717057320602
+
+
+## Method 3
+## Ridge regression (features: SemEval 2015 (3,5), SemEval 2013 (1))
+## Pearson coefficient : 0
+
+Ensemble CSV for category c3 created :)
+## Method 4
+## Ensemble (Methods 1,2,3)
+## Pearson coefficient :  0.760147399529
+
+## SemEval category : c4
+
+## Test dataset size :  750 
+
+## Method 1
+## SemEval 2015 rank 5 - DLS@CU-U
+## Pearson coefficient :  0.819410790709
+
+
+## Method 2
+## SemEval 2013 rank 1 - UMBC EBIQUITY-CORE
+## Pearson coefficient :  0.791373745621
+
+
+## Method 3
+## Ridge regression (features: SemEval 2015 (3,5), SemEval 2013 (1))
+## Train dataset size :  2949 
+
+## Pearson coefficient :  0.819186961269
+
+
+Ensemble CSV for category c4 created :)
+## Method 4
+## Ensemble (Methods 1,2,3)
+## Pearson coefficient :  0.836709015029
+
+
+
